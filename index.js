@@ -3,7 +3,7 @@ const http = require("http");
 const app = express();
 const server = http.createServer(app);
 const io = require("socket.io")(server);
-const port = 3001; //port
+const port = 3000; //port
 io.on("connection", socket => {
     // socket.emit("test_connection", { socketId: socket.id });
     console.log("New Client connected", socket.id);
