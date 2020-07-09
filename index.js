@@ -25,11 +25,6 @@ io.on("connection", socket => {
       roomId: roomId
     });
     console.log(clientsJoined);
-    // if (clients !== undefined)
-    // }
-    // socket.broadcast.to(socket.id).emit('playerNum', { data: clients });
-    // io.sockets.socket(socket.id).emit('playerNum', { data: clients });
-    // socket.to(socket.roomId).emit("test_connection", { roomId: socket.roomId });
   });
   socket.on("rollEmit", data => {
     var { roomId } = data;
@@ -50,14 +45,6 @@ io.on("connection", socket => {
   });
   socket.on("moveCoin", data => {
     var { roomId } = data;
-    var clients = io.nsps["/"].adapter.rooms[roomId];
-    Object.keys(clients.sockets).forEach(el => {
-      if (el !== socket.id) {
-        // console.log(el);
-        // console.log(socket.id);
-        io.to(el).emit("move_coin", data);
-      }
-    });
     socket.to(roomId).emit("move_coin", data);
   });
   socket.on("undoMove", data => {
@@ -69,7 +56,7 @@ io.on("connection", socket => {
     socket.to(roomId).emit("transfer_move", data);
   });
 });
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header(
     "Access-Control-Allow-Headers",
