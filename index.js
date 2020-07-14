@@ -6,33 +6,33 @@ const io = require("socket.io")(server);
 const fs = require('fs');
 const port = 3001; //port
 const playerOneInit = [
-  { 'x': 14, 'y': 1, 'status': 0, 'curPos': -1 },
-  { 'x': 14, 'y': 2, 'status': 0, 'curPos': -1 },
-  { 'x': 14, 'y': 3, 'status': 0, 'curPos': -1 },
-  { 'x': 14, 'y': 4, 'status': 0, 'curPos': -1 },
-  { 'x': 15, 'y': 1, 'status': 0, 'curPos': -1 },
-  { 'x': 15, 'y': 2, 'status': 0, 'curPos': -1 },
-  { 'x': 15, 'y': 3, 'status': 0, 'curPos': -1 },
-  { 'x': 15, 'y': 4, 'status': 0, 'curPos': -1 },
-  { 'x': 16, 'y': 1, 'status': 0, 'curPos': -1 },
-  { 'x': 16, 'y': 2, 'status': 0, 'curPos': -1 },
-  { 'x': 16, 'y': 3, 'status': 0, 'curPos': -1 },
-  { 'x': 16, 'y': 4, 'status': 0, 'curPos': -1 }
+  { 'x': 14, 'y': 1, 'st': 0, 'cp': -1 },
+  { 'x': 14, 'y': 2, 'st': 0, 'cp': -1 },
+  { 'x': 14, 'y': 3, 'st': 0, 'cp': -1 },
+  { 'x': 14, 'y': 4, 'st': 0, 'cp': -1 },
+  { 'x': 15, 'y': 1, 'st': 0, 'cp': -1 },
+  { 'x': 15, 'y': 2, 'st': 0, 'cp': -1 },
+  { 'x': 15, 'y': 3, 'st': 0, 'cp': -1 },
+  { 'x': 15, 'y': 4, 'st': 0, 'cp': -1 },
+  { 'x': 16, 'y': 1, 'st': 0, 'cp': -1 },
+  { 'x': 16, 'y': 2, 'st': 0, 'cp': -1 },
+  { 'x': 16, 'y': 3, 'st': 0, 'cp': -1 },
+  { 'x': 16, 'y': 4, 'st': 0, 'cp': -1 }
 ];
 const playerTwoInit = [
-  { 'x': 14, 'y': 8, 'status': 0, 'curPos': -1 },
-  // {'x': 11, 'y': 7, 'status': 1, 'curPos': 60},
-  { 'x': 14, 'y': 9, 'status': 0, 'curPos': -1 },
-  { 'x': 14, 'y': 10, 'status': 0, 'curPos': -1 },
-  { 'x': 14, 'y': 11, 'status': 0, 'curPos': -1 },
-  { 'x': 15, 'y': 8, 'status': 0, 'curPos': -1 },
-  { 'x': 15, 'y': 9, 'status': 0, 'curPos': -1 },
-  { 'x': 15, 'y': 10, 'status': 0, 'curPos': -1 },
-  { 'x': 15, 'y': 11, 'status': 0, 'curPos': -1 },
-  { 'x': 16, 'y': 8, 'status': 0, 'curPos': -1 },
-  { 'x': 16, 'y': 9, 'status': 0, 'curPos': -1 },
-  { 'x': 16, 'y': 10, 'status': 0, 'curPos': -1 },
-  { 'x': 16, 'y': 11, 'status': 0, 'curPos': -1 },
+  { 'x': 14, 'y': 8, 'st': 0, 'cp': -1 },
+  // {'x': 11, 'y': 7, 'st': 1, 'cp': 60},
+  { 'x': 14, 'y': 9, 'st': 0, 'cp': -1 },
+  { 'x': 14, 'y': 10, 'st': 0, 'cp': -1 },
+  { 'x': 14, 'y': 11, 'st': 0, 'cp': -1 },
+  { 'x': 15, 'y': 8, 'st': 0, 'cp': -1 },
+  { 'x': 15, 'y': 9, 'st': 0, 'cp': -1 },
+  { 'x': 15, 'y': 10, 'st': 0, 'cp': -1 },
+  { 'x': 15, 'y': 11, 'st': 0, 'cp': -1 },
+  { 'x': 16, 'y': 8, 'st': 0, 'cp': -1 },
+  { 'x': 16, 'y': 9, 'st': 0, 'cp': -1 },
+  { 'x': 16, 'y': 10, 'st': 0, 'cp': -1 },
+  { 'x': 16, 'y': 11, 'st': 0, 'cp': -1 },
 ];
 io.on("connection", socket => {
   // socket.emit("test_connection", { socketId: socket.id });
@@ -72,8 +72,31 @@ io.on("connection", socket => {
       let playerOneFirstDhayam = false;
       let playerTwoFirstDhayam = false;
       let curPlayer = 'P1';
+      let selectTarget = [-1, -1];
+      let newTarget = [-1, -1];
+      let newInvalidTarget = [-1, -1];
+      let moveStack = [];
+      let selectedCoin = -1;
+      let startMove = false;
+      let rollAgain = false;
+
       let gameData = {
-        playerOnePos, playerTwoPos, diceStack, turnStack, playerOneCut, playerTwoCut, curPlayer, playerOneFirstDhayam, playerTwoFirstDhayam
+        playerOnePos,
+        playerTwoPos,
+        diceStack,
+        turnStack,
+        playerOneCut,
+        playerTwoCut,
+        curPlayer,
+        playerOneFirstDhayam,
+        playerTwoFirstDhayam,
+        selectTarget,
+        newTarget,
+        newInvalidTarget,
+        moveStack,
+        selectedCoin,
+        startMove,
+        rollAgain
       }
 
 
@@ -101,6 +124,8 @@ io.on("connection", socket => {
       if (err) throw err;
       let gameData = JSON.parse(game_data);
       gameData['diceStack'] = data['diceStack'];
+      gameData['startMove'] = data['startMove'];
+      gameData['rollAgain'] = data['rollAgain'];
       fs.writeFile(`public/${roomId}.json`, JSON.stringify(gameData), (err) => {
         if (err) throw err;
         console.log('Data written to file');
@@ -114,11 +139,19 @@ io.on("connection", socket => {
     //Store to File
     fs.readFile(`public/${roomId}.json`, (err, game_data) => {
       if (err) throw err;
+      console.log(typeof game_data);
       let gameData = JSON.parse(game_data);
       gameData['curPlayer'] = data['curPlayer'];
+      gameData['diceStack'] = [];
+      gameData['turnStack'] = [];
+      gameData['newTarget'] = [-1,-1];
+      gameData['newInvalidTarget'] = [-1,-1];
+      gameData['selectTarget'] = [-1,-1];
+      gameData['startMove'] = false;
+      gameData['rollAgain'] = false;
       fs.writeFile(`public/${roomId}.json`, JSON.stringify(gameData), (err) => {
         if (err) throw err;
-        console.log('Data written to file');
+        console.log('Data written to file changePlayerEmit');
       })
     });
     //Store to File
@@ -169,7 +202,6 @@ io.on("connection", socket => {
   });
   socket.on("moveCoin", data => {
     var { roomId, coinCutStatus, iAmPos, oppPos, selectedCoin, diceStack, moveStack, turnStack, selectTarget, newTarget, emit, playerOneCut, playerTwoCut } = data;
-    console.log('Move Coin', data);
     //Store to File
     fs.readFile(`public/${roomId}.json`, (err, game_data) => {
       if (err) throw err;
