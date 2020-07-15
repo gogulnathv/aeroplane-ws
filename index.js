@@ -2,7 +2,10 @@ const express = require("express");
 const http = require("http");
 const app = express();
 const server = http.createServer(app);
-const io = require("socket.io")(server);
+const io = require("socket.io").listen(server, {
+  pingTimeout: 1000,
+  pingInterval: 1000,
+});
 const fs = require('fs');
 const port = 3001; //port
 const playerOneInit = [
@@ -37,11 +40,16 @@ const playerTwoInit = [
 io.on("connection", socket => {
   // socket.emit("test_connection", { socketId: socket.id });
   console.log("New Client connected", socket.id);
+  socket.on('disconnect', data => {
+    console.log(socket.roomId);
+    socket.leave(socket.roomId);
+    socket.to(socket.roomId).emit('opp_disconnect');
+  });
   socket.on("joinRoom", data => {
-    var { roomId, userId, firstConnect, gameVersion, active } = data;
+    let { roomId, userId, firstConnect, gameVersion, active } = data;
     socket.roomId = roomId;
     socket.userId = userId;
-    var socketId = socket.id;
+    let socketId = socket.id;
     console.log(socketId);
     if (!firstConnect) {
       let gameData = [];
@@ -56,12 +64,16 @@ io.on("connection", socket => {
         socket.emit('sync', gameData);
       }
     }
+    if (!firstConnect) {
+      socket.to(roomId).emit('opp_reconnect');
+    }
     socket.join(roomId);
-    var clientsJoined = io.nsps["/"].adapter.rooms[roomId];
-    var playerNum = clientsJoined.length;
+    let clientsJoined = io.nsps["/"].adapter.rooms[roomId];
+    let playerNum = clientsJoined.length;
     if (!firstConnect) {
       playerNum = 0;
     }
+
     if (firstConnect && playerNum == 1) {
       let playerOnePos = playerOneInit.slice(0, gameVersion);
       let playerTwoPos = playerTwoInit.slice(0, gameVersion);
@@ -113,12 +125,13 @@ io.on("connection", socket => {
     });
     console.log(clientsJoined);
   });
-  socket.on('pingSent', data => {
+  socket.on('pingSent', (data, callback) => {
     console.log('ping');
-    socket.emit('pingRes');
+    callback({ 'OK': true });
+    // socket.emit('pingRes');
   });
   socket.on("rollEmit", data => {
-    var { roomId } = data;
+    let { roomId } = data;
     //Store to File
     fs.readFile(`public/${roomId}.json`, (err, game_data) => {
       if (err) throw err;
@@ -135,7 +148,7 @@ io.on("connection", socket => {
     socket.to(roomId).emit("dice_roll", data);
   });
   socket.on("changePlayerEmit", data => {
-    var { roomId } = data;
+    let { roomId } = data;
     //Store to File
     fs.readFile(`public/${roomId}.json`, (err, game_data) => {
       if (err) throw err;
@@ -144,9 +157,9 @@ io.on("connection", socket => {
       gameData['curPlayer'] = data['curPlayer'];
       gameData['diceStack'] = [];
       gameData['turnStack'] = [];
-      gameData['newTarget'] = [-1,-1];
-      gameData['newInvalidTarget'] = [-1,-1];
-      gameData['selectTarget'] = [-1,-1];
+      gameData['newTarget'] = [-1, -1];
+      gameData['newInvalidTarget'] = [-1, -1];
+      gameData['selectTarget'] = [-1, -1];
       gameData['startMove'] = false;
       gameData['rollAgain'] = false;
       fs.writeFile(`public/${roomId}.json`, JSON.stringify(gameData), (err) => {
@@ -158,11 +171,12 @@ io.on("connection", socket => {
     socket.to(roomId).emit("change_player", data);
   });
   socket.on("coinEntry", data => {
-    var { roomId, diceStack, playerPos, firstDhayam, emit } = data;
+    let { roomId, diceStack, playerPos, firstDhayam, emit } = data;
     let pOnePos, p
     //Store to File
     fs.readFile(`public/${roomId}.json`, (err, game_data) => {
       if (err) throw err;
+      console.log(game_data);
       let gameData = JSON.parse(game_data);
       if (emit == 'P1') {
         gameData['playerOnePos'] = playerPos;
@@ -181,7 +195,7 @@ io.on("connection", socket => {
     socket.to(roomId).emit("coin_entry", data);
   });
   socket.on("validateMove", data => {
-    var { roomId, selectedCoin, diceStack, moveStack, selectTarget, newTarget, newInvalidTarget, emit } = data;
+    let { roomId, selectedCoin, diceStack, moveStack, selectTarget, newTarget, newInvalidTarget, emit } = data;
     //Store to File
     fs.readFile(`public/${roomId}.json`, (err, game_data) => {
       if (err) throw err;
@@ -201,7 +215,45 @@ io.on("connection", socket => {
     socket.to(roomId).emit("validate_move", data);
   });
   socket.on("moveCoin", data => {
-    var { roomId, coinCutStatus, iAmPos, oppPos, selectedCoin, diceStack, moveStack, turnStack, selectTarget, newTarget, emit, playerOneCut, playerTwoCut } = data;
+    let { roomId, coinCutStatus, iAmPos, oppPos, selectedCoin, diceStack, moveStack, turnStack, selectTarget, newTarget, emit, playerOneCut, playerTwoCut } = data;
+    //Store to File
+    fs.readFile(`public/${roomId}.json`, (err, game_data) => {
+      if (err) throw err;
+      let gameData = JSON.parse(game_data);
+      console.log(iAmPos);
+      if (emit == 'P1') {
+        gameData['playerOnePos'] = iAmPos;
+        if (coinCutStatus) gameData['playerTwoPos'] = oppPos;
+      } else {
+        gameData['playerTwoPos'] = iAmPos;
+        if (coinCutStatus) gameData['playerOnePos'] = oppPos;
+      }
+
+      gameData['selectedCoin'] = selectedCoin;
+      gameData['playerOneCut'] = playerOneCut;
+      gameData['playerTwoCut'] = playerTwoCut;
+      gameData['diceStack'] = diceStack;
+      gameData['moveStack'] = [];
+      gameData['turnStack'] = turnStack;
+      gameData['selectTarget'] = [-1,-1];
+      gameData['newTarget'] = [-1,-1];
+      gameData['selectedCoin'] = -1;
+      fs.writeFile(`public/${roomId}.json`, JSON.stringify(gameData), (err) => {
+        if (err) throw err;
+        console.log('Data written to file');
+      })
+    });
+    //Store to File
+    socket.to(roomId).emit("move_coin", {
+      'selectedCoin': selectedCoin,
+      'moveStack': moveStack,
+      'newTarget': newTarget,
+      'selectTarget': selectTarget,
+      'emit': emit
+    });
+  });
+  socket.on("undoMove", data => {
+    let { roomId, coinCutStatus, iAmPos, oppPos, selectedCoin, diceStack, moveStack, turnStack, selectTarget, newTarget, emit, playerOneCut, playerTwoCut } = data;
     //Store to File
     fs.readFile(`public/${roomId}.json`, (err, game_data) => {
       if (err) throw err;
@@ -229,14 +281,10 @@ io.on("connection", socket => {
       })
     });
     //Store to File
-    socket.to(roomId).emit("move_coin", data);
-  });
-  socket.on("undoMove", data => {
-    var { roomId } = data;
-    socket.to(roomId).emit("undo_move", data);
+    socket.to(roomId).emit("undo_move", { 'emit': emit, 'roomId': roomId });
   });
   socket.on("transferMove", data => {
-    var { roomId } = data;
+    let { roomId } = data;
     socket.to(roomId).emit("transfer_move", data);
   });
 });
