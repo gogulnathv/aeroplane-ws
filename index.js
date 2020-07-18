@@ -152,7 +152,7 @@ io.on("connection", socket => {
     //Store to File
     fs.readFile(`public/${roomId}.json`, (err, game_data) => {
       if (err) throw err;
-      console.log(typeof game_data);
+      console.log("changePlayerEmit",game_data);
       let gameData = JSON.parse(game_data);
       gameData['curPlayer'] = data['curPlayer'];
       gameData['diceStack'] = [];
@@ -172,11 +172,11 @@ io.on("connection", socket => {
   });
   socket.on("coinEntry", data => {
     let { roomId, diceStack, playerPos, firstDhayam, emit } = data;
-    let pOnePos, p
+    // let pOnePos, p
     //Store to File
     fs.readFile(`public/${roomId}.json`, (err, game_data) => {
       if (err) throw err;
-      console.log(game_data);
+      console.log("CoinEntry",game_data);
       let gameData = JSON.parse(game_data);
       if (emit == 'P1') {
         gameData['playerOnePos'] = playerPos;
