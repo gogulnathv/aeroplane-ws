@@ -10,6 +10,10 @@ const gameSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
         }],
+        creator: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        },
         bet: {
             type: Number,
             required: true
@@ -23,15 +27,18 @@ const gameSchema = new mongoose.Schema(
             required: true
         },
         gameStarted: {
-            type: Boolean,
+            type: Number,
             required: true
         },
-
+        winner: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        },
     },
     { timestamps: true },
 );
 gameSchema.statics = {
-    create : function(data, cb) {
+    create: function (data, cb) {
         var game = new this(data);
         game.save(cb);
     },

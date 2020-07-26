@@ -23,6 +23,10 @@ const statisticSchema = new mongoose.Schema(
         totalCoins: {
             type: Number
         },
+        gamesInProgress:[{
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Game',
+        }],
         user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
     },
     { timestamps: true },

@@ -18,7 +18,7 @@ const boardModel = require('./models/board');
 const gameModel = require('./models/game');
 // connectDb().then(async () => {});
 connectDb().then(async (db) => {
-  
+
 
   app.use(bodyParser.urlencoded({ extended: false }));
   app.use(bodyParser.json());
@@ -32,13 +32,14 @@ connectDb().then(async (db) => {
   //   next();
   // });
   app.get("/", (req, res) => {
-    let {room_id}=req.query;
-    var result = boardModel.find({room_id}).populate('user').exec(function (error, posts) {
+    let { room_id } = req.query;
+    var result = boardModel.find({ room_id }).populate('user').exec(function (error, posts) {
       res.send(JSON.stringify(posts, null, "\t"));
     })
 
     // return 'Hello';
   });
+
   app.post('/register', (req, res) => {
     let { username, platform, os_ver } = req.body;
     userModel.create({ username }, function (err, user) {
@@ -107,84 +108,121 @@ connectDb().then(async (db) => {
       socket.leave(socket.roomId);
       socket.to(socket.roomId).emit('opp_disconnect');
     });
-    socket.on("createRoom", data => {
+    function getNumber(callback) {
+      var n = Math.floor(10000000 + Math.random() * 90000000);
+      gameModel.findOne({ 'room_id': n }, function (err, result) {
+        if (err) callback(err);
+        else if (result) return getNumber(callback);
+        else callback(null, n);
+      });
+    }
+
+
+    socket.on("createRoom", async (data) => {
       let { userId, deviceId, gameVer, bet } = data;
-      let room_id = Math.floor(10000000 + Math.random() * 90000000);
-      let gameVersion = gameVer;
+      let existingRoom = await gameModel.findOne({ creator: userId, gameStarted: 0 });
+      if (existingRoom) {
+        // console.log();
+        let { room_id, gameVersion } = existingRoom;
+        socket.join(room_id);
+        socket.emit("playerNum", {
+          data: 1,
+          roomId: room_id,
+          gameVersion
+        });
+      } else {
+        getNumber(function (error, number) {
+          console.log(number);
 
-      let gameData = {
-        room_id,
-        users: [userId],
-        bet,
-        GamePot: bet,
-        gameStarted: false,
-        gameVersion
-      }
-      gameModel.create(gameData, (err, game) => {
-        let playerOnePos = playerOneInit.slice(0, gameVersion);
-        let playerTwoPos = playerTwoInit.slice(0, gameVersion);
-        let diceStack = [];
-        let turnStack = [];
-        let playerOneCut = 0;
-        let playerTwoCut = 0;
-        let playerOneFirstDhayam = false;
-        let playerTwoFirstDhayam = false;
-        let curPlayer = 'P1';
-        let selectTarget = [-1, -1];
-        let newTarget = [-1, -1];
-        let newInvalidTarget = [-1, -1];
-        let moveStack = [];
-        let selectedCoin = -1;
-        let startMove = false;
-        let rollAgain = false;
+          let room_id = number;//Math.floor(10000000 + Math.random() * 90000000);
+          let gameVersion = gameVer;
 
-        let boardData = {
-          room_id,
-          playerOnePos,
-          playerTwoPos,
-          diceStack,
-          turnStack,
-          playerOneCut,
-          playerTwoCut,
-          curPlayer,
-          playerOneFirstDhayam,
-          playerTwoFirstDhayam,
-          selectTarget,
-          newTarget,
-          newInvalidTarget,
-          moveStack,
-          selectedCoin,
-          startMove,
-          rollAgain,
-          p1: userId,
-          game_id: game._id
-        }
-        boardModel.create(boardData, (err, board) => {
-          socket.join(room_id);
-          socket.emit("playerNum", {
-            data: 1,
-            roomId: room_id,
-            gameVersion
+          let gameData = {
+            room_id,
+            users: [userId],
+            bet,
+            GamePot: bet,
+            gameStarted: 0,
+            gameVersion,
+            creator: userId
+          }
+          gameModel.create(gameData, (err, game) => {
+            let playerOnePos = playerOneInit.slice(0, gameVersion);
+            let playerTwoPos = playerTwoInit.slice(0, gameVersion);
+            let diceStack = [];
+            let turnStack = [];
+            let playerOneCut = 0;
+            let playerTwoCut = 0;
+            let playerOneFirstDhayam = false;
+            let playerTwoFirstDhayam = false;
+            let curPlayer = 'P1';
+            let selectTarget = [-1, -1];
+            let newTarget = [-1, -1];
+            let newInvalidTarget = [-1, -1];
+            let moveStack = [];
+            let selectedCoin = -1;
+            let startMove = false;
+            let rollAgain = false;
+
+            let boardData = {
+              room_id,
+              playerOnePos,
+              playerTwoPos,
+              diceStack,
+              turnStack,
+              playerOneCut,
+              playerTwoCut,
+              curPlayer,
+              playerOneFirstDhayam,
+              playerTwoFirstDhayam,
+              selectTarget,
+              newTarget,
+              newInvalidTarget,
+              moveStack,
+              selectedCoin,
+              startMove,
+              rollAgain,
+              p1: userId,
+              game_id: game._id
+            }
+            boardModel.create(boardData, (err, board) => {
+              socket.join(room_id);
+              socket.emit("playerNum", {
+                data: 1,
+                roomId: room_id,
+                gameVersion
+              });
+            });
           });
         });
-      });
+      }
     });
     socket.on("joinRoom2", data => {
       let { roomId, userId } = data;
       gameModel.findOne({ room_id: roomId }, (err, data) => {
         if (err) throw err;
-        let bet = data.bet;
-        let gameVersion = data.gameVersion;
         if (data) {
-          if (data.users.length < 2) {
+          let bet = data.bet;
+          let gameVersion = data.gameVersion;
+          let iAm = userId == data.p1 ? 'P1' : 'P2'
+          let gameId = data._id;
+          console.log(data.users.indexOf(userId));
+          if (data.users.indexOf(userId) >= 0) {
+            socket.join(roomId);
+            socket.emit('gameStart', { gameVersion, iAm, roomId, continueGame: true });
+          } else if (data.users.length < 2) {
             let users = [...data.users, userId];
-            gameModel.findOneAndUpdate({ room_id: roomId }, { users: users });
+
+            gameModel.findOneAndUpdate({ room_id: roomId }, { users: users, gameStarted: 1 }, { new: true }, (err, data) => { });
 
             boardModel.findOneAndUpdate({ room_id: roomId }, { p2: userId }, { new: true }, (err, data) => {
               if (err) throw err;
               statModel.updateMany(
                 { $or: [{ user: data.p1 }, { user: data.p2 }] },
                 { $inc: { 'totalCoins': -bet } });
+              users.forEach((user) => {
+                statModel.findOneAndUpdate({ user: user }, { $push: { gamesInProgress: gameId } }, { new: true }, (err, userCB) => { })
+              })
             });
             socket.join(roomId);
             socket.emit("playerNum", {
@@ -192,13 +230,26 @@ connectDb().then(async (db) => {
               roomId: roomId,
               gameVersion
             });
-            socket.to(roomId).emit('gameStart');
+            socket.to(roomId).emit('gameStart', { continueGame: false });
           } else {
             //ToDO: Roomful
           }
         }
       })
 
+    });
+    socket.on("gameOver", data => {
+      let { userId } = data;
+      gameModel.findOneAndUpdate({ room_id: roomId }, { winner: userId, gameStarted: 2 }, { new: true }, (err, data) => { });
+    })
+    socket.on("syncMe", data => {
+      console.log("syncMe")
+      let { roomId } = data;
+      console.log("syncMe", data)
+      boardModel.findOne({ room_id: roomId }, (err, gameData) => {
+        console.log(gameData);
+        socket.emit('sync', gameData);
+      });
     });
     socket.on("joinRoom", data => {
       let { roomId, userId, firstConnect, gameVersion, active } = data;
@@ -225,7 +276,7 @@ connectDb().then(async (db) => {
     });
     socket.on("rollEmit", data => {
       let { roomId, diceStack, startMove, rollAgain } = data;
-      boardModel.findOneAndUpdate({ room_id: roomId }, { diceStack, startMove, rollAgain },{new:true},(err,roll)=>{
+      boardModel.findOneAndUpdate({ room_id: roomId }, { diceStack, startMove, rollAgain }, { new: true }, (err, roll) => {
       });
       socket.to(roomId).emit("dice_roll", data);
     });
@@ -240,8 +291,8 @@ connectDb().then(async (db) => {
       gameData['selectTarget'] = [-1, -1];
       gameData['startMove'] = false;
       gameData['rollAgain'] = false;
-      boardModel.findOneAndUpdate({ room_id: roomId }, gameData,{new:true},(err,change)=>{
-        
+      boardModel.findOneAndUpdate({ room_id: roomId }, gameData, { new: true }, (err, change) => {
+
       });
       socket.to(roomId).emit("change_player", data);
     });
@@ -268,7 +319,7 @@ connectDb().then(async (db) => {
       gameData['selectTarget'] = selectTarget;
       gameData['newTarget'] = newTarget;
       gameData['newInvalidTarget'] = newInvalidTarget;
-      boardModel.findOneAndUpdate({ room_id: roomId }, gameData,{new:true},(err,validate)=>{
+      boardModel.findOneAndUpdate({ room_id: roomId }, gameData, { new: true }, (err, validate) => {
       });
       socket.to(roomId).emit("validate_move", data);
     });
@@ -292,8 +343,8 @@ connectDb().then(async (db) => {
       gameData['selectTarget'] = [-1, -1];
       gameData['newTarget'] = [-1, -1];
       gameData['selectedCoin'] = -1;
-      boardModel.findOneAndUpdate({ room_id: roomId }, gameData,{new:true},(err,movCoin)=>{
-        
+      boardModel.findOneAndUpdate({ room_id: roomId }, gameData, { new: true }, (err, movCoin) => {
+
       });
       socket.to(roomId).emit("move_coin", {
         'selectedCoin': selectedCoin,
@@ -322,8 +373,8 @@ connectDb().then(async (db) => {
       gameData['turnStack'] = turnStack;
       gameData['selectTarget'] = selectTarget;
       gameData['newTarget'] = newTarget;
-      boardModel.findOneAndUpdate({ room_id: roomId }, gameData,{new:true},(err,undoMove)=>{
-        
+      boardModel.findOneAndUpdate({ room_id: roomId }, gameData, { new: true }, (err, undoMove) => {
+
       });
       socket.to(roomId).emit("undo_move", { 'emit': emit, 'roomId': roomId });
     });
@@ -334,4 +385,6 @@ connectDb().then(async (db) => {
   });
 
   server.listen(port, () => console.log(`Server listening on port ${port}!`));
+}).catch((e) => {
+  console.log("No connection to DB");
 });
