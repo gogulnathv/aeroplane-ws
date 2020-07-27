@@ -39,10 +39,70 @@ connectDb().then(async (db) => {
 
     // return 'Hello';
   });
+  app.get("/pending_game", (req, res) => {
+    let { userId } = req.query;
+    gameModel.find({ $or: [{ creator: userId }, { opponent: userId }], gameStarted: 1 }).populate(['creator', 'opponent']).sort('-createdAt').exec(function (error, games) {
+      console.log(error);
+      // console.log(games);
+      let result = [];
+      games.forEach((game) => {
+        console.log(game);
+        let opponent;
+        if (game.creator && game.creator._id == userId) {
+          opponent = game.opponent.username;
+        } else if (game.opponent && game.opponent._id == userId) {
+          opponent = game.creator.username;
+        }
+        result.push({
+          gameId: game._id,
+          roomId: game.room_id,
+          opponent,
+          created: game.createdAt,
+          selected: false
+        })
+      })
+      res.json(result);
+    })
+  });
+  app.get("/joinedCheck", (req, res) => {
+    let { room_id } = req.query;
+    if (room_id)
+      gameModel.findOne({ room_id: room_id, gameStarted: 1 }, (err, gameData) => {
+        if (err) throw err;
+        if (gameData) {
+          res.json({
+            oppJoined: true,
+          })
+        } else {
+          res.json({ oppJoined: false })
+        }
+      })
+  });
+
+  app.post("/registerCheck", (req, res) => {
+    let { userId } = req.body;
+    console.log(userId);
+    userModel.findOne({ _id: userId }, (err, data) => {
+      console.log(err);
+      console.log(data);
+
+      if (err) throw err;
+      if (data) {
+        res.json({
+          registered: true
+        })
+      } else {
+        res.json({
+          registered: false
+        })
+      }
+    })
+  });
 
   app.post('/register', (req, res) => {
     let { username, platform, os_ver } = req.body;
     userModel.create({ username }, function (err, user) {
+      console.log(err);
       if (err) {
         if (err.code === 11000 || err.code === 11001) {
           res.json({
@@ -213,7 +273,7 @@ connectDb().then(async (db) => {
           } else if (data.users.length < 2) {
             let users = [...data.users, userId];
 
-            gameModel.findOneAndUpdate({ room_id: roomId }, { users: users, gameStarted: 1 }, { new: true }, (err, data) => { });
+            gameModel.findOneAndUpdate({ room_id: roomId }, { users: users, gameStarted: 1, opponent: userId }, { new: true }, (err, data) => { });
 
             boardModel.findOneAndUpdate({ room_id: roomId }, { p2: userId }, { new: true }, (err, data) => {
               if (err) throw err;
@@ -240,7 +300,10 @@ connectDb().then(async (db) => {
     });
     socket.on("gameOver", data => {
       let { userId } = data;
-      gameModel.findOneAndUpdate({ room_id: roomId }, { winner: userId, gameStarted: 2 }, { new: true }, (err, data) => { });
+      gameModel.findOneAndUpdate({ room_id: roomId }, { winner: userId, gameStarted: 2 }, { new: true }, (err, gameData) => {
+        let coinsWon = gameData.GamePot;
+        statModel.findOneAndUpdate({ user: userId }, { $inc: { 'totalCoins': +coinsWon } }, { new: true }, (err, statData) => { });
+      });
     })
     socket.on("syncMe", data => {
       console.log("syncMe")

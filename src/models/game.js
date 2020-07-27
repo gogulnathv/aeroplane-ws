@@ -14,6 +14,10 @@ const gameSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
         },
+        opponent: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User',
+        },
         bet: {
             type: Number,
             required: true
