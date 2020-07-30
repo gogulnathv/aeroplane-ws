@@ -39,15 +39,24 @@ connectDb().then(async (db) => {
 
     // return 'Hello';
   });
+  app.get("/update_name",(req,res)=>{
+    let { userId, username } = req.query;
+    console.log(userId);
+    if(userId&&username){
+      userModel.findOneAndUpdate({_id:userId},{username},{new:true},(err,user)=>{
+        console.log(err);
+        console.log(user);
+        res.json({message:'success'});
+      })
+    }
+  });
   app.get("/pending_game", (req, res) => {
     let { userId } = req.query;
 
     gameModel.find({ $or: [{ creator: userId }, { opponent: userId }], gameStarted: 1 }).populate(['creator', 'opponent']).sort('-createdAt').exec(function (error, games) {
       console.log(error);
-      // console.log(games);
       let result = [];
       games.forEach((game) => {
-        console.log(game);
         let opponent;
         if (game.creator && game.creator._id == userId) {
           opponent = game.opponent.username;
@@ -93,10 +102,8 @@ connectDb().then(async (db) => {
 
   app.post("/registerCheck", (req, res) => {
     let { userId } = req.body;
-    console.log(userId);
     userModel.findOne({ _id: userId }, (err, data) => {
       console.log(err);
-      console.log(data);
 
       if (err) throw err;
       if (data) {
@@ -132,12 +139,13 @@ connectDb().then(async (db) => {
           totalCoins: 10000,
           user: userId
         };
-        statModel.create(statsData, function (err, stat) { });
+        statModel.create(statsData, function (err, stat) { 
+        });
         deviceModel.create({ platform, os_ver, user: userId }, function (err, device) {
           res.json({
             userId,
             deviceId: device._id
-          })
+          });
         })
       }
 
@@ -194,7 +202,6 @@ connectDb().then(async (db) => {
       let { userId, deviceId, gameVer, bet } = data;
       let existingRoom = await gameModel.findOne({ creator: userId, gameStarted: 0 });
       if (existingRoom) {
-        // console.log();
         let { room_id, gameVersion } = existingRoom;
         socket.join(room_id);
         socket.emit("playerNum", {
@@ -204,8 +211,6 @@ connectDb().then(async (db) => {
         });
       } else {
         getNumber(function (error, number) {
-          console.log(number);
-
           let room_id = number;//Math.floor(10000000 + Math.random() * 90000000);
           let gameVersion = gameVer;
 
@@ -278,7 +283,6 @@ connectDb().then(async (db) => {
           let gameVersion = data.gameVersion;
           let iAm = userId == data.p1 ? 'P1' : 'P2'
           let gameId = data._id;
-          console.log(data.users.indexOf(userId));
           if (data.users.indexOf(userId) >= 0) {
             socket.join(roomId);
             socket.emit('gameStart', { gameVersion, iAm, roomId, continueGame: true });
@@ -320,9 +324,7 @@ connectDb().then(async (db) => {
     socket.on("syncMe", data => {
       console.log("syncMe")
       let { roomId } = data;
-      console.log("syncMe", data)
       boardModel.findOne({ room_id: roomId }, (err, gameData) => {
-        console.log(gameData);
         socket.emit('sync', gameData);
       });
     });
@@ -373,7 +375,6 @@ connectDb().then(async (db) => {
     });
     socket.on("coinEntry", data => {
       let { roomId, diceStack, playerPos, firstDhayam, emit } = data;
-      console.log("firstDhayam",firstDhayam);
       let gameData = {};
       if (emit == 'P1') {
         gameData['playerOnePos'] = playerPos;
