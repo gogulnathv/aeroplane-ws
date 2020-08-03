@@ -4,10 +4,11 @@ const bodyParser = require("body-parser");
 const app = express();
 const mongoose = require('mongoose');
 const server = http.createServer(app);
-const io = require("socket.io").listen(server, {
-  pingTimeout: 1000,
-  pingInterval: 1000,
-});
+const io = require("socket.io")(server);
+// .listen(server, {
+//   pingTimeout: 1000,
+//   pingInterval: 1000,
+// });
 const fs = require('fs');
 const port = 3001; //port
 const connectDb = require('./models');
@@ -372,6 +373,10 @@ connectDb().then(async (db) => {
 
       });
       socket.to(roomId).emit("change_player", data);
+    });
+    socket.on("message", data =>{
+      let {roomId} = data;
+      socket.to(roomId).emit("msg", data);
     });
     socket.on("coinEntry", data => {
       let { roomId, diceStack, playerPos, firstDhayam, emit } = data;
