@@ -107,7 +107,7 @@ connectDb().then(async (db) => {
     let { userId } = req.query;
 
     gameModel.find({ $or: [{ creator: userId }, { opponent: userId }], gameStarted: 1 }).populate(['creator', 'opponent']).sort('-createdAt').exec(function (error, games) {
-      console.log(error);
+      if(err) throw err;
       let result = [];
       games.forEach((game) => {
         let opponent;
@@ -361,8 +361,10 @@ connectDb().then(async (db) => {
             });
             socket.to(roomId).emit('gameStart', { continueGame: false });
           } else {
-            //ToDO: Roomful
+            socket.emit("roomFul");
           }
+        }else{
+          socket.emit("wrongRoom");
         }
       })
 
