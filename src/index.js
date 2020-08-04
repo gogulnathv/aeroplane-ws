@@ -44,50 +44,53 @@ connectDb().then(async (db) => {
 
     // return 'Hello';
   });
+  app.get("/ping_server", (req, res) => {
+    res.json({ OK: true });
+  });
 
   app.get("/check_update", (req, res) => {
     let { version } = req.query;
-    let { minVersion,currentVersion } = app_version;
+    let { minVersion, currentVersion } = app_version;
     let minVersionArr = minVersion.split('.').map(Number);
     let currentVersionArr = currentVersion.split('.').map(Number);
     let clientVersionArr = version.split('.').map(Number);
     let major = false;
     let minor = false;
     if (!(clientVersionArr[0] >= minVersionArr[0])) {
-      res.json({update:true,force:true});
+      res.json({ update: true, force: true });
       return;
-    }else if(clientVersionArr[0] > minVersionArr[0]){
+    } else if (clientVersionArr[0] > minVersionArr[0]) {
       major = true;
     }
-    if(!(clientVersionArr[1] >= minVersionArr[1])&&!major){
-      res.json({update:true,force:true});
+    if (!(clientVersionArr[1] >= minVersionArr[1]) && !major) {
+      res.json({ update: true, force: true });
       return;
-    }else if(clientVersionArr[1] > minVersionArr[1]){
+    } else if (clientVersionArr[1] > minVersionArr[1]) {
       minor = true;
     }
-    if(!(clientVersionArr[2] >= minVersionArr[2])&&!minor&&!major){
-      res.json({update:true,force:true});
+    if (!(clientVersionArr[2] >= minVersionArr[2]) && !minor && !major) {
+      res.json({ update: true, force: true });
       return;
     }
     minor = false;
     major = false;
     if (!(clientVersionArr[0] >= currentVersionArr[0])) {
-      res.json({update:true,force:false});
+      res.json({ update: true, force: false });
       return;
-    }else if(clientVersionArr[0] > currentVersionArr[0]){
+    } else if (clientVersionArr[0] > currentVersionArr[0]) {
       major = true;
     }
-    if(!(clientVersionArr[1] >= currentVersionArr[1])&&!major){
-      res.json({update:true,force:false});
+    if (!(clientVersionArr[1] >= currentVersionArr[1]) && !major) {
+      res.json({ update: true, force: false });
       return;
-    }else if(clientVersionArr[1] > currentVersionArr[1]){
+    } else if (clientVersionArr[1] > currentVersionArr[1]) {
       minor = true;
     }
-    if(!(clientVersionArr[2] >= currentVersionArr[2])&&!minor&&!major){
-      res.json({update:true,force:false});
+    if (!(clientVersionArr[2] >= currentVersionArr[2]) && !minor && !major) {
+      res.json({ update: true, force: false });
       return;
     }
-    res.json({update:false,force:false});
+    res.json({ update: false, force: false });
   });
   app.get("/update_name", (req, res) => {
     let { userId, username } = req.query;
@@ -250,7 +253,7 @@ connectDb().then(async (db) => {
 
     socket.on("createRoom", async (data) => {
       let { userId, deviceId, gameVer, bet } = data;
-      let existingRoom = await gameModel.findOne({ creator: userId, gameStarted: 0 });
+      let existingRoom = await gameModel.findOne({ creator: userId, gameStarted: 0, gameVersion: gameVer, bet: bet });
       if (existingRoom) {
         let { room_id, gameVersion } = existingRoom;
         socket.join(room_id);
