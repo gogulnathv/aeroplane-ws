@@ -5,6 +5,10 @@ const app = express();
 const mongoose = require('mongoose');
 const server = http.createServer(app);
 const io = require("socket.io")(server);
+const app_version = {
+  currentVersion: '1.0.1',
+  minVersion: '1.0.1',
+};
 // .listen(server, {
 //   pingTimeout: 1000,
 //   pingInterval: 1000,
@@ -40,14 +44,59 @@ connectDb().then(async (db) => {
 
     // return 'Hello';
   });
-  app.get("/update_name",(req,res)=>{
+
+  app.get("/check_update", (req, res) => {
+    let { version } = req.query;
+    let { minVersion,currentVersion } = app_version;
+    let minVersionArr = minVersion.split('.').map(Number);
+    let currentVersionArr = currentVersion.split('.').map(Number);
+    let clientVersionArr = version.split('.').map(Number);
+    let major = false;
+    let minor = false;
+    if (!(clientVersionArr[0] >= minVersionArr[0])) {
+      res.json({update:true,force:true});
+      return;
+    }else if(clientVersionArr[0] > minVersionArr[0]){
+      major = true;
+    }
+    if(!(clientVersionArr[1] >= minVersionArr[1])&&!major){
+      res.json({update:true,force:true});
+      return;
+    }else if(clientVersionArr[1] > minVersionArr[1]){
+      minor = true;
+    }
+    if(!(clientVersionArr[2] >= minVersionArr[2])&&!minor&&!major){
+      res.json({update:true,force:true});
+      return;
+    }
+    minor = false;
+    major = false;
+    if (!(clientVersionArr[0] >= currentVersionArr[0])) {
+      res.json({update:true,force:false});
+      return;
+    }else if(clientVersionArr[0] > currentVersionArr[0]){
+      major = true;
+    }
+    if(!(clientVersionArr[1] >= currentVersionArr[1])&&!major){
+      res.json({update:true,force:false});
+      return;
+    }else if(clientVersionArr[1] > currentVersionArr[1]){
+      minor = true;
+    }
+    if(!(clientVersionArr[2] >= currentVersionArr[2])&&!minor&&!major){
+      res.json({update:true,force:false});
+      return;
+    }
+    res.json({update:false,force:false});
+  });
+  app.get("/update_name", (req, res) => {
     let { userId, username } = req.query;
     console.log(userId);
-    if(userId&&username){
-      userModel.findOneAndUpdate({_id:userId},{username},{new:true},(err,user)=>{
+    if (userId && username) {
+      userModel.findOneAndUpdate({ _id: userId }, { username }, { new: true }, (err, user) => {
         console.log(err);
         console.log(user);
-        res.json({message:'success'});
+        res.json({ message: 'success' });
       })
     }
   });
@@ -140,7 +189,7 @@ connectDb().then(async (db) => {
           totalCoins: 10000,
           user: userId
         };
-        statModel.create(statsData, function (err, stat) { 
+        statModel.create(statsData, function (err, stat) {
         });
         deviceModel.create({ platform, os_ver, user: userId }, function (err, device) {
           res.json({
@@ -374,8 +423,8 @@ connectDb().then(async (db) => {
       });
       socket.to(roomId).emit("change_player", data);
     });
-    socket.on("message", data =>{
-      let {roomId} = data;
+    socket.on("message", data => {
+      let { roomId } = data;
       socket.to(roomId).emit("msg", data);
     });
     socket.on("coinEntry", data => {
@@ -389,7 +438,7 @@ connectDb().then(async (db) => {
         gameData['playerTwoFirstDhayam'] = firstDhayam;
       }
       gameData['diceStack'] = diceStack;
-      boardModel.findOneAndUpdate({ room_id: roomId }, gameData,{new:true},(err,bm)=>{});
+      boardModel.findOneAndUpdate({ room_id: roomId }, gameData, { new: true }, (err, bm) => { });
       socket.to(roomId).emit("coin_entry", data);
     });
     socket.on("validateMove", data => {
