@@ -106,7 +106,7 @@ connectDb().then(async (db) => {
   app.get("/pending_game", (req, res) => {
     let { userId } = req.query;
 
-    gameModel.find({ $or: [{ creator: userId }, { opponent: userId }], gameStarted: 1 }).populate(['creator', 'opponent']).sort('-createdAt').exec(function (error, games) {
+    gameModel.find({ $or: [{ creator: userId }, { opponent: userId }], gameStarted: 1 }).populate(['creator', 'opponent']).sort('-createdAt').exec(function (err, games) {
       if(err) throw err;
       let result = [];
       games.forEach((game) => {
