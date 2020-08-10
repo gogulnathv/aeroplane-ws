@@ -377,7 +377,6 @@ connectDb().then(async (db) => {
       });
     })
     socket.on("syncMe", data => {
-      console.log("syncMe")
       let { roomId } = data;
       boardModel.findOne({ room_id: roomId }, (err, gameData) => {
         socket.emit('sync', gameData);
@@ -411,6 +410,11 @@ connectDb().then(async (db) => {
       boardModel.findOneAndUpdate({ room_id: roomId }, { diceStack, startMove, rollAgain }, { new: true }, (err, roll) => {
       });
       socket.to(roomId).emit("dice_roll", data);
+    });
+    socket.on("flushEmit",data => {
+      let { roomId, diceStack,turnStack,curPlayer ,startMove, rollAgain } = data;
+      boardModel.findOneAndUpdate({ room_id: roomId }, { diceStack,turnStack, startMove, rollAgain,curPlayer }, { new: true }, (err, roll) => {
+      });
     });
     socket.on("changePlayerEmit", data => {
       let { roomId, curPlayer } = data;
