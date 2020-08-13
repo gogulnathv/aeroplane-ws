@@ -148,7 +148,7 @@ connectDb().then(async (db) => {
       statModel.findOne({ user: userId }, (err, statistics) => {
         if (err) throw err;
         if (statistics) {
-          res.json({ totalCoins: statistics.totalCoins });
+          res.json(statistics);
         }
       })
   });
