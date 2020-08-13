@@ -206,64 +206,64 @@ connectDb().then(async (db) => {
 
   });
 
-  const playerOneInit = [
-    { 'x': 14, 'y': 1, 'st': 0, 'cp': -1 },
-    { 'x': 14, 'y': 2, 'st': 0, 'cp': -1 },
-    { 'x': 14, 'y': 3, 'st': 0, 'cp': -1 },
-    { 'x': 14, 'y': 4, 'st': 0, 'cp': -1 },
-    { 'x': 15, 'y': 1, 'st': 0, 'cp': -1 },
-    { 'x': 15, 'y': 2, 'st': 0, 'cp': -1 },
-    { 'x': 15, 'y': 3, 'st': 0, 'cp': -1 },
-    { 'x': 15, 'y': 4, 'st': 0, 'cp': -1 },
-    { 'x': 16, 'y': 1, 'st': 0, 'cp': -1 },
-    { 'x': 16, 'y': 2, 'st': 0, 'cp': -1 },
-    { 'x': 16, 'y': 3, 'st': 0, 'cp': -1 },
-    { 'x': 16, 'y': 4, 'st': 0, 'cp': -1 }
-  ];
-  const playerTwoInit = [
-    { 'x': 14, 'y': 8, 'st': 0, 'cp': -1 },
-    // {'x': 11, 'y': 7, 'st': 1, 'cp': 60},
-    { 'x': 14, 'y': 9, 'st': 0, 'cp': -1 },
-    { 'x': 14, 'y': 10, 'st': 0, 'cp': -1 },
-    { 'x': 14, 'y': 11, 'st': 0, 'cp': -1 },
-    { 'x': 15, 'y': 8, 'st': 0, 'cp': -1 },
-    { 'x': 15, 'y': 9, 'st': 0, 'cp': -1 },
-    { 'x': 15, 'y': 10, 'st': 0, 'cp': -1 },
-    { 'x': 15, 'y': 11, 'st': 0, 'cp': -1 },
-    { 'x': 16, 'y': 8, 'st': 0, 'cp': -1 },
-    { 'x': 16, 'y': 9, 'st': 0, 'cp': -1 },
-    { 'x': 16, 'y': 10, 'st': 0, 'cp': -1 },
-    { 'x': 16, 'y': 11, 'st': 0, 'cp': -1 },
-  ];
-
   // const playerOneInit = [
-  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
-  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
-  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
-  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
-  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
-  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
-  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
-  //   { 'x': 18, 'y': 0, 'st': 1, 'cp': 0 },
-  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
-  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
-  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
-  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+  //   { 'x': 14, 'y': 1, 'st': 0, 'cp': -1 },
+  //   { 'x': 14, 'y': 2, 'st': 0, 'cp': -1 },
+  //   { 'x': 14, 'y': 3, 'st': 0, 'cp': -1 },
+  //   { 'x': 14, 'y': 4, 'st': 0, 'cp': -1 },
+  //   { 'x': 15, 'y': 1, 'st': 0, 'cp': -1 },
+  //   { 'x': 15, 'y': 2, 'st': 0, 'cp': -1 },
+  //   { 'x': 15, 'y': 3, 'st': 0, 'cp': -1 },
+  //   { 'x': 15, 'y': 4, 'st': 0, 'cp': -1 },
+  //   { 'x': 16, 'y': 1, 'st': 0, 'cp': -1 },
+  //   { 'x': 16, 'y': 2, 'st': 0, 'cp': -1 },
+  //   { 'x': 16, 'y': 3, 'st': 0, 'cp': -1 },
+  //   { 'x': 16, 'y': 4, 'st': 0, 'cp': -1 }
   // ];
   // const playerTwoInit = [
-  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
-  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
-  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
-  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
-  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
-  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
-  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
-  //   { 'x': 18, 'y': 8, 'st': 1, 'cp': 4 },
-  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
-  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
-  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
-  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+  //   { 'x': 14, 'y': 8, 'st': 0, 'cp': -1 },
+  //   // {'x': 11, 'y': 7, 'st': 1, 'cp': 60},
+  //   { 'x': 14, 'y': 9, 'st': 0, 'cp': -1 },
+  //   { 'x': 14, 'y': 10, 'st': 0, 'cp': -1 },
+  //   { 'x': 14, 'y': 11, 'st': 0, 'cp': -1 },
+  //   { 'x': 15, 'y': 8, 'st': 0, 'cp': -1 },
+  //   { 'x': 15, 'y': 9, 'st': 0, 'cp': -1 },
+  //   { 'x': 15, 'y': 10, 'st': 0, 'cp': -1 },
+  //   { 'x': 15, 'y': 11, 'st': 0, 'cp': -1 },
+  //   { 'x': 16, 'y': 8, 'st': 0, 'cp': -1 },
+  //   { 'x': 16, 'y': 9, 'st': 0, 'cp': -1 },
+  //   { 'x': 16, 'y': 10, 'st': 0, 'cp': -1 },
+  //   { 'x': 16, 'y': 11, 'st': 0, 'cp': -1 },
   // ];
+
+  const playerOneInit = [
+    { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+    { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+    { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+    { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+    { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+    { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+    { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+    { 'x': 18, 'y': 0, 'st': 1, 'cp': 0 },
+    { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+    { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+    { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+    { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+  ];
+  const playerTwoInit = [
+    { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+    { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+    { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+    { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+    { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+    { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+    { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+    { 'x': 18, 'y': 8, 'st': 1, 'cp': 4 },
+    { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+    { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+    { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+    { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+  ];
   io.on("connection", socket => {
     console.log("New Client connected", socket.id);
     socket.on('disconnect', data => {
@@ -379,7 +379,7 @@ connectDb().then(async (db) => {
               //   { $or: [{ user: data.p1 }, { user: data.p2 }] },
               //   { $inc: { 'totalCoins': -bet } });
               users.forEach((user) => {
-                statModel.findOneAndUpdate({ user: user }, { $inc: { 'totalCoins': -bet } }, { new: true }, (err, userCB) => { })
+                statModel.findOneAndUpdate({ user: user }, { $inc: { 'totalCoins': -bet, 'gamesPlayed': +1 } }, { new: true }, (err, userCB) => { })
               })
             });
             socket.join(roomId);
@@ -403,9 +403,22 @@ connectDb().then(async (db) => {
       gameModel.findOneAndUpdate({ room_id: roomId }, { winner: userId, gameStarted: 2 }, { new: true }, (err, gameData) => {
         let coinsWon = gameData.GamePot;
         boardModel.findOne({ room_id: roomId }, (err, boardData) => {
-          let {} = boardData;
-          statModel.findOneAndUpdate({ user: userId }, { $inc: { 'totalCoins': +coinsWon } }, { new: true }, (err, statData) => { });
-        });        
+          let { playerOneCut, playerTwoCut, p1, p2 } = boardData;
+          let winnerCut = 0;
+          let opponentCut = 0;
+          let loserId;
+          if (p1 == userId) {
+            winnerCut = playerOneCut;
+            opponentCut = playerTwoCut;
+            loserId = p2;
+          } else {
+            winnerCut = playerTwoCut;
+            opponentCut = playerOneCut;
+            loserId = p1
+          }
+          statModel.findOneAndUpdate({ user: loserId }, { $inc: { 'totalCaptured': +opponentCut, 'totalGiven': +winnerCut, 'gamesLost': +1 } }, { new: true }, (err, statData) => { });
+          statModel.findOneAndUpdate({ user: userId }, { $inc: { 'totalCoins': +coinsWon, 'totalCaptured': +winnerCut, 'totalGiven': +opponentCut, 'gamesWon': +1 } }, { new: true }, (err, statData) => { });
+        });
       });
     })
     socket.on("syncMe", data => {
