@@ -107,7 +107,7 @@ connectDb().then(async (db) => {
     let { userId } = req.query;
 
     gameModel.find({ $or: [{ creator: userId }, { opponent: userId }], gameStarted: 1 }).populate(['creator', 'opponent']).sort('-createdAt').exec(function (err, games) {
-      if(err) throw err;
+      if (err) throw err;
       let result = [];
       games.forEach((game) => {
         let opponent;
@@ -235,6 +235,35 @@ connectDb().then(async (db) => {
     { 'x': 16, 'y': 10, 'st': 0, 'cp': -1 },
     { 'x': 16, 'y': 11, 'st': 0, 'cp': -1 },
   ];
+
+  // const playerOneInit = [
+  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+  //   { 'x': 18, 'y': 0, 'st': 1, 'cp': 0 },
+  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+  //   { 'x': 4, 'y': 4, 'st': 3, 'cp': 79 },
+  // ];
+  // const playerTwoInit = [
+  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+  //   { 'x': 18, 'y': 8, 'st': 1, 'cp': 4 },
+  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+  //   { 'x': 4, 'y': 8, 'st': 3, 'cp': 79 },
+  // ];
   io.on("connection", socket => {
     console.log("New Client connected", socket.id);
     socket.on('disconnect', data => {
@@ -350,7 +379,7 @@ connectDb().then(async (db) => {
               //   { $or: [{ user: data.p1 }, { user: data.p2 }] },
               //   { $inc: { 'totalCoins': -bet } });
               users.forEach((user) => {
-                statModel.findOneAndUpdate({ user: user }, { $push: { gamesInProgress: gameId }, $inc: { 'totalCoins': -bet } }, { new: true }, (err, userCB) => { })
+                statModel.findOneAndUpdate({ user: user }, { $inc: { 'totalCoins': -bet } }, { new: true }, (err, userCB) => { })
               })
             });
             socket.join(roomId);
@@ -363,17 +392,20 @@ connectDb().then(async (db) => {
           } else {
             socket.emit("roomFul");
           }
-        }else{
+        } else {
           socket.emit("wrongRoom");
         }
       })
 
     });
     socket.on("gameOver", data => {
-      let { userId } = data;
+      let { userId, roomId } = data;
       gameModel.findOneAndUpdate({ room_id: roomId }, { winner: userId, gameStarted: 2 }, { new: true }, (err, gameData) => {
         let coinsWon = gameData.GamePot;
-        statModel.findOneAndUpdate({ user: userId }, { $inc: { 'totalCoins': +coinsWon } }, { new: true }, (err, statData) => { });
+        boardModel.findOne({ room_id: roomId }, (err, boardData) => {
+          let {} = boardData;
+          statModel.findOneAndUpdate({ user: userId }, { $inc: { 'totalCoins': +coinsWon } }, { new: true }, (err, statData) => { });
+        });        
       });
     })
     socket.on("syncMe", data => {
@@ -411,9 +443,9 @@ connectDb().then(async (db) => {
       });
       socket.to(roomId).emit("dice_roll", data);
     });
-    socket.on("flushEmit",data => {
-      let { roomId, diceStack,turnStack,curPlayer ,startMove, rollAgain } = data;
-      boardModel.findOneAndUpdate({ room_id: roomId }, { diceStack,turnStack, startMove, rollAgain,curPlayer }, { new: true }, (err, roll) => {
+    socket.on("flushEmit", data => {
+      let { roomId, diceStack, turnStack, curPlayer, startMove, rollAgain } = data;
+      boardModel.findOneAndUpdate({ room_id: roomId }, { diceStack, turnStack, startMove, rollAgain, curPlayer }, { new: true }, (err, roll) => {
       });
     });
     socket.on("changePlayerEmit", data => {
@@ -517,6 +549,25 @@ connectDb().then(async (db) => {
 
       });
       socket.to(roomId).emit("undo_move", { 'emit': emit, 'roomId': roomId });
+    });
+    socket.on("transferData", data => {
+      let { roomId, playerOnePos, playerTwoPos, startMove, rollAgain, selectedCoin, diceStack, moveStack, turnStack, selectTarget, newTarget, emit, playerOneCut, playerTwoCut } = data;
+      let gameData = {};
+      gameData['playerOnePos'] = playerOnePos;
+      gameData['playerTwoPos'] = playerTwoPos;
+      gameData['selectedCoin'] = selectedCoin;
+      gameData['playerOneCut'] = playerOneCut;
+      gameData['playerTwoCut'] = playerTwoCut;
+      gameData['diceStack'] = diceStack;
+      gameData['moveStack'] = moveStack;
+      gameData['turnStack'] = turnStack;
+      gameData['selectTarget'] = selectTarget;
+      gameData['newTarget'] = newTarget;
+      gameData['startMove'] = startMove;
+      gameData['rollAgain'] = rollAgain;
+      boardModel.findOneAndUpdate({ room_id: roomId }, gameData, { new: true }, (err, undoMove) => {
+
+      });
     });
     socket.on("transferMove", data => {
       let { roomId } = data;

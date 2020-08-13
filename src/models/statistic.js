@@ -2,31 +2,41 @@ const mongoose = require('mongoose');
 
 const statisticSchema = new mongoose.Schema(
     {
-        totalGames: {
-            type: Number
+        gamesPlayed: {
+            type: Number,
+            default: 0
         },
-        totalWin: {
-            type: Number
+        gamesWon: {
+            type: Number,
+            default: 0
+        },
+        gamesLost: {
+            type: Number,
+            default: 0
+        },
+        gamesAbandoned: {
+            type: Number,
+            default: 0
         },
         totalCaptured: {
-            type: Number
+            type: Number,
+            default: 0
         },
         totalGiven: {
-            type: Number
+            type: Number,
+            default: 0
         },
         singleHighestRoll: {
-            type: Number
+            type: Number,
+            default: 0
         },
         totalFullEntry: {
-            type: Number
+            type: Number,
+            default: 0
         },
         totalCoins: {
             type: Number
         },
-        gamesInProgress:[{
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Game',
-        }],
         user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
     },
     { timestamps: true },
