@@ -130,7 +130,7 @@ connectDb().then(async (db) => {
   });
   app.get("/opp_stats", (req, res) => {
     let { userId,roomId } = req.query;
-    gameModel.findOne({ room_id: roomId, gameStarted: 1 }).populate(['creator', 'opponent']).exec(function (err, games) {
+    gameModel.findOne({ room_id: roomId, gameStarted: 1 }).populate(['creator', 'opponent']).exec(function (err, game) {
       if (err) throw err;
         let opponent;
         if (game.creator && game.creator._id == userId) {
