@@ -130,7 +130,6 @@ connectDb().then(async (db) => {
   });
   app.get("/opp_stats", (req, res) => {
     let { userId,roomId } = req.query;
-
     gameModel.findOne({ room_id: roomId, gameStarted: 1 }).populate(['creator', 'opponent']).exec(function (err, games) {
       if (err) throw err;
         let opponent;
@@ -140,11 +139,10 @@ connectDb().then(async (db) => {
           opponent = game.creator._id;
         }
         if(opponent){
-          statModel.findOne({_id:opponent},(err,stat)=>{
+          statModel.findOne({user:opponent},(err,stat)=>{
             res.json(stat);
           })
         }
-      // setTimeout(() => { res.json(result) }, 5000);
     })
   });
   app.get("/joinedCheck", (req, res) => {
