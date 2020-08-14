@@ -128,6 +128,25 @@ connectDb().then(async (db) => {
       res.json(result);
     })
   });
+  app.get("/opp_stats", (req, res) => {
+    let { userId,roomId } = req.query;
+
+    gameModel.findOne({ room_id: roomId, gameStarted: 1 }).populate(['creator', 'opponent']).exec(function (err, games) {
+      if (err) throw err;
+        let opponent;
+        if (game.creator && game.creator._id == userId) {
+          opponent = game.opponent._id;
+        } else if (game.opponent && game.opponent._id == userId) {
+          opponent = game.creator._id;
+        }
+        if(opponent){
+          statModel.findOne({_id:opponent},(err,stat)=>{
+            res.json(stat);
+          })
+        }
+      // setTimeout(() => { res.json(result) }, 5000);
+    })
+  });
   app.get("/joinedCheck", (req, res) => {
     let { room_id } = req.query;
     if (room_id)
