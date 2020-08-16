@@ -557,6 +557,16 @@ connectDb().then(async (db) => {
       boardModel.findOneAndUpdate({ room_id: roomId }, gameData, { new: true }, (err, movCoin) => {
 
       });
+      // socket.to(roomId).emit("move_coin", {
+      //   'selectedCoin': selectedCoin,
+      //   'moveStack': moveStack,
+      //   'newTarget': newTarget,
+      //   'selectTarget': selectTarget,
+      //   'emit': emit
+      // });
+    });
+    socket.on("moveCoinFn", data =>{
+      let { roomId, selectedCoin, moveStack, selectTarget, newTarget, emit } = data;
       socket.to(roomId).emit("move_coin", {
         'selectedCoin': selectedCoin,
         'moveStack': moveStack,
@@ -564,7 +574,7 @@ connectDb().then(async (db) => {
         'selectTarget': selectTarget,
         'emit': emit
       });
-    });
+    })
     socket.on("undoMove", data => {
       let { roomId, coinCutStatus, iAmPos, oppPos, selectedCoin, diceStack, moveStack, turnStack, selectTarget, newTarget, emit, playerOneCut, playerTwoCut } = data;
       let gameData = {};
