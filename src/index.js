@@ -215,7 +215,7 @@ connectDb().then(async (db) => {
       } else {
         let userId = user._id;
         let statsData = {
-          totalCoins: 10000,
+          totalCoins: 1000,
           user: userId
         };
         statModel.create(statsData, function (err, stat) {
