@@ -3,7 +3,8 @@ const mongoose = require('mongoose');
 // import User from 'user';
 
 const connectDb = () => {
-  return mongoose.connect('mongodb://localhost:27017/dk',
+  // gogul - G0gu1Nath
+  return mongoose.connect('mongodb://goguldk:G0gu1_dk@127.0.0.1:27017/dk',
     {
       useUnifiedTopology: true,
       useNewUrlParser: true,

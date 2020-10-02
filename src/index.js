@@ -45,6 +45,7 @@ connectDb().then(async (db) => {
     // return 'Hello';
   });
   app.get("/ping_server", (req, res) => {
+    // setTimeout(() => { res.json({ OK: true }) }, 50000);
     res.json({ OK: true });
   });
 
@@ -108,50 +109,55 @@ connectDb().then(async (db) => {
 
     gameModel.find({ $or: [{ creator: userId }, { opponent: userId }], gameStarted: 1 }).populate(['creator', 'opponent']).sort('-createdAt').exec(function (err, games) {
       if (err) throw err;
-      let result = [];
-      games.forEach((game) => {
-        let opponent;
-        if (game.creator && game.creator._id == userId) {
-          opponent = game.opponent.username;
-        } else if (game.opponent && game.opponent._id == userId) {
-          opponent = game.creator.username;
-        }
-        result.push({
-          gameId: game._id,
-          roomId: game.room_id,
-          opponent,
-          created: game.createdAt,
-          selected: false
+      try {
+        let result = [];
+        games.forEach((game) => {
+          let opponent;
+          if (game.creator && game.creator._id == userId) {
+            opponent = game.opponent.username;
+          } else if (game.opponent && game.opponent._id == userId) {
+            opponent = game.creator.username;
+          }
+          result.push({
+            gameId: game._id,
+            roomId: game.room_id,
+            opponent,
+            created: game.createdAt,
+            selected: false
+          })
         })
-      })
-      // setTimeout(() => { res.json(result) }, 5000);
-      res.json(result);
+        // setTimeout(() => { res.json(result) }, 5000);
+        res.json(result);
+      } catch (e) {
+        res.json([]);
+      }
+
     })
   });
-  app.get("/add_coin",(req, res)=>{
+  app.get("/add_coin", (req, res) => {
     let { userId, coin } = req.query;
-    statModel.findOneAndUpdate({ user: userId }, { $inc: { 'totalCoins': +parseInt(coin)} }, { new: true }, (err, userCB) => { 
+    statModel.findOneAndUpdate({ user: userId }, { $inc: { 'totalCoins': +parseInt(coin) } }, { new: true }, (err, userCB) => {
       if (err) throw err;
-      if(userCB){
-        res.json({totalCoins: userCB['totalCoins']});
+      if (userCB) {
+        res.json({ totalCoins: userCB['totalCoins'] });
       }
     })
   });
   app.get("/opp_stats", (req, res) => {
-    let { userId,roomId } = req.query;
+    let { userId, roomId } = req.query;
     gameModel.findOne({ room_id: roomId, gameStarted: 1 }).populate(['creator', 'opponent']).exec(function (err, game) {
       if (err) throw err;
-        let opponent;
-        if (game.creator && game.creator._id == userId) {
-          opponent = game.opponent._id;
-        } else if (game.opponent && game.opponent._id == userId) {
-          opponent = game.creator._id;
-        }
-        if(opponent){
-          statModel.findOne({user:opponent},(err,stat)=>{
-            res.json(stat);
-          })
-        }
+      let opponent;
+      if (game.creator && game.creator._id == userId) {
+        opponent = game.opponent._id;
+      } else if (game.opponent && game.opponent._id == userId) {
+        opponent = game.creator._id;
+      }
+      if (opponent) {
+        statModel.findOne({ user: opponent }, (err, stat) => {
+          res.json(stat);
+        })
+      }
     })
   });
   app.get("/joinedCheck", (req, res) => {
@@ -292,8 +298,32 @@ connectDb().then(async (db) => {
   // ];
   io.on("connection", socket => {
     console.log("New Client connected", socket.id);
+    io.clients((error, clients) => {
+      if (error) throw error;
+      console.log(clients.length); // => [6em3d4TJP8Et9EMNAAAA, G5p55dHhGgUnLUctAAAB]
+    });
+    function destroy() {
+      try {
+        console.log("Destroy");
+        socket.disconnect();
+        socket.removeAllListeners();
+        socket = NULL; //this will kill all event listeners working with socket
+        //set some other stuffs to NULL
+      }
+      catch { }
+    }
+    // var alive = Date.now()
+    // socket.on("am_alive", (data) => { alive = Date.now() }) // client tell the server that it is alive
+
+    // const intv = setInterval(() => {
+    //   if (Date.now() > (alive + 10000)) {//sever checks if clients has no activity in last 20s
+    //     destroy();
+    //     clearInterval(intv)
+    //   }
+    // }, 5000)
     socket.on('disconnect', data => {
       socket.leave(socket.roomId);
+      destroy();
       socket.to(socket.roomId).emit('opp_disconnect');
     });
     function getNumber(callback) {
@@ -334,6 +364,16 @@ connectDb().then(async (db) => {
           gameModel.create(gameData, (err, game) => {
             let playerOnePos = playerOneInit.slice(0, gameVersion);
             let playerTwoPos = playerTwoInit.slice(0, gameVersion);
+            if (gameVersion == 6) {
+              playerOnePos = [
+                ...playerOneInit.slice(0, 3),
+                ...playerOneInit.slice(4, 7)
+              ];
+              playerTwoPos = [
+                ...playerTwoInit.slice(0, 3),
+                ...playerTwoInit.slice(4, 7)
+              ];
+            }
             let diceStack = [];
             let turnStack = [];
             let playerOneCut = 0;
@@ -535,6 +575,7 @@ connectDb().then(async (db) => {
       socket.to(roomId).emit("validate_move", data);
     });
     socket.on("moveCoin", data => {
+      console.log(data);
       let { roomId, coinCutStatus, iAmPos, oppPos, selectedCoin, diceStack, moveStack, turnStack, selectTarget, newTarget, emit, playerOneCut, playerTwoCut } = data;
       let gameData = {};
       if (emit == 'P1') {
@@ -557,15 +598,15 @@ connectDb().then(async (db) => {
       boardModel.findOneAndUpdate({ room_id: roomId }, gameData, { new: true }, (err, movCoin) => {
 
       });
-      // socket.to(roomId).emit("move_coin", {
-      //   'selectedCoin': selectedCoin,
-      //   'moveStack': moveStack,
-      //   'newTarget': newTarget,
-      //   'selectTarget': selectTarget,
-      //   'emit': emit
-      // });
+      socket.to(roomId).emit("move_coin", {
+        'selectedCoin': selectedCoin,
+        'moveStack': moveStack,
+        'newTarget': newTarget,
+        'selectTarget': selectTarget,
+        'emit': emit
+      });
     });
-    socket.on("moveCoinFn", data =>{
+    socket.on("moveCoinFn", data => {
       let { roomId, selectedCoin, moveStack, selectTarget, newTarget, emit } = data;
       socket.to(roomId).emit("move_coin", {
         'selectedCoin': selectedCoin,
